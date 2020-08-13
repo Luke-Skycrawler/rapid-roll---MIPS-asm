@@ -1,0 +1,35 @@
+gen:
+    lw $ra,0($sp)
+    addi $sp,$sp,-4
+    addi $t0,$zero,19
+    divu $a3,$t0
+    mfhi $t0
+    slti $t0,$t0,2
+    // TODO: decide the frequency of the panel
+    beq $zero,$t0,gen_end
+        addi $t1,$zero,17
+        // decide hostile or friendly
+        divu $a3,$t1
+        mfhi $t1
+        addi $t2,$zero,72
+        // starting position
+        divu $a3,$t2
+        mfhi $t2
+        slti $t1,$t1,2
+        bne $t1,$zero,$t1
+            //jal DRAW_BROAD($t2,LASTLINE)
+            j panel_join
+        case_spike:
+            //jal DRAW_SPIKE($t2,LASTLINE)
+        panel_join:
+        jal random
+    gen_end:
+    addi $sp,$sp,4
+    lw $ra,0($sp)
+jr $ra
+
+// divu: quotiont in lo, remainder in hi
+// TODO: generate life; generate the initial condition (should be easy)
+// chosen to be prime to ensure the independency
+// broad length: 8
+// FIXME: ensure HEAP !=0; generate a seed for startup (use a counter)
