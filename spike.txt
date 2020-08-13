@@ -1,0 +1,10 @@
+spike:
+    move $s0,$a0
+    addi $s1,$s0,32
+    addi $t1,$zero,0x701E
+    loop_spike:
+        add $t0,$s0,$s6
+        sw $t1,0($t0)
+        addi $s0,$s0,4
+    bne $s0,$s1,loop_spike
+jr $ra

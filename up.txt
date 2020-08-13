@@ -1,0 +1,34 @@
+.text 0x0
+addi $s7,$zero,0x2fff
+nor $s7,$s7,$zero           //s7 = 0xffffd000
+addi $s6,$zero,12
+sll $s6, $s6,16             //s6 = 0x000c0000
+//addi $$t0,$$t0,0x0741       //background black, text white
+addi $s5,$zero,4800
+sll $s5,$s5,2
+jal up_spike
+up_spike:                    //stack pointer not used, static not stored
+    addi $s0,$zero,0
+    addi $s1,$zero,320
+    addi $t1,$zero,0x0720
+    loop_0:
+        add $t0,$s0,$s6
+        sw $t1,0($t0)
+        addi $s0,$s0,4
+    bne $s0,$s1,loop_0
+    addi $s0,$zero,320
+    addi $s1,$zero,640
+    addi $t1,$zero,0x7056
+    loop_1:
+        add $t0,$s0,$s6
+        sw $t1,0($t0)
+        addi $s0,$s0,4
+    bne $s0,$s1,loop_1
+    addi $s0,$zero,640
+    addi $t1,$zero,0x7020
+    loop_2:
+        add $t0,$s0,$s6		
+        sw $t1,0($t0)			
+        addi $s0,$s0,4
+    bne $s0,$s5,loop_2	//$$s5 page text count
+jr $ra

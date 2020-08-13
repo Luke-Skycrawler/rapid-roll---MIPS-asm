@@ -1,0 +1,5 @@
+heart:
+    add $t0,$a0,$s6
+    addi $t1,$zero,0x7503
+    sw $t1,0($t0)    
+jr $ra
