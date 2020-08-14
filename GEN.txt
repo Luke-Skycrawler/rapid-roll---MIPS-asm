@@ -1,35 +1,35 @@
 gen:
-    lw ra,0($sp)
+    lw $ra,0($sp)
     addi $sp,$sp,-4
-    addi r1,zero,19
-    divu heap,r1
-    mfhi r1
-    slti r1,r1,2
+    addi $t0,$zero,19
+    divu $a3,$t0
+    mfhi $t0
+    slti $t0,$t0,2
     // TODO: decide the frequency of the panel
-    beq zero,r1,gen_end
-        addi r2,zero,17
+    beq $zero,$t0,gen_end
+        addi $t1,$zero,17
         // decide hostile or friendly
-        divu heap,r2
-        mfhi r2
-        addi r3,zero,72
+        divu $a3,$t1
+        mfhi $t1
+        addi $t2,$zero,72
         // starting position
-        divu heap,r3
-        mfhi r3
-        slti r2,r2,2
-        bne r2,zero,r2
-            jal DRAW_BROAD(r3,LASTLINE)
+        divu $a3,$t2
+        mfhi $t2
+        slti $t1,$t1,2
+        bne $t1,$zero,$t1
+            //jal DRAW_BROAD($t2,LASTLINE)
             j panel_join
         case_spike:
-            jal DRAW_SPIKE(r3,LASTLINE)
+            //jal DRAW_SPIKE($t2,LASTLINE)
         panel_join:
-        jal RAMDOM
+        jal random
     gen_end:
     addi $sp,$sp,4
-    lw ra,0($sp)
-jr ra
+    lw $ra,0($sp)
+jr $ra
 
 // divu: quotiont in lo, remainder in hi
 // TODO: generate life; generate the initial condition (should be easy)
 // chosen to be prime to ensure the independency
 // broad length: 8
-// FIXME: ensure heap !=0; generate a seed for startup (use a counter)
+// FIXME: ensure HEAP !=0; generate a seed for startup (use a counter)

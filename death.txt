@@ -1,0 +1,36 @@
+death:
+    addi $sp,$sp,-4
+    sw ra,4($sp)
+    addi heap,heap,-1
+    
+recover:
+    addi r1,$zero,1600
+    sll r1,r1,2
+    add r1,r1,$s6
+    addi r2,$zero,2400
+    sll r2,r2,2
+    add r2,r2,$s6
+    loop_recover:
+        lw r3,0(r1)
+        addi r4,$zero,0x1720
+        bne r3,r4,empty_LZ
+            //jal erase
+            addi $s0,r1,-312
+            move $a0,$s0
+            jal ball
+            j end_recover
+        empty_LZ:
+        addi r1,r1,4
+        slt r3,r1,r2
+    bne r3,$zero,loop_recover
+    
+        addi $s0,$zero,1720
+        move $a0,$s0
+        jal ball 
+    end_recover:
+    lw ra,4($sp)
+    addi $sp,$sp,4
+jr $ra
+// TODO: store the position of the bricks on some part of the RAM
+
+.data <0x00001000>

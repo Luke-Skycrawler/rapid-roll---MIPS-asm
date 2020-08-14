@@ -1,5 +1,7 @@
 .text 0x0
+addi $a2,$zero,5
 addi $a3,$zero,1
+addi $sp,$zero,0x1000
 addi $s7,$zero,0x2fff
 nor $s7,$s7,$zero           //s7 = 0xffffd000
 addi $s6,$zero,12
@@ -133,10 +135,12 @@ refresh:
     lw $t1,320($t0)
 	andi $t1,$t1,0xffff
     addi $t9,$zero,0x7020
+    addi $t3,$zero,0x701E
+    beq $t3,$t1,death_point2
     bne $t9,$t1,go_up
     lw $t1,640($t0)
     andi $t1,$t1,0xffff
-    addi $t9,$zero,0x7020
+    //beq $t8,$t1,death_point2
     bne $t9,$t1,stady
     j go_down
     stady:
@@ -147,16 +151,21 @@ refresh:
         jal ball
         addi $t9,$zero,960
         slt $v0,$s0,$t9
-        bne $v0,$zero,scroll_down
+        bne $v0,$zero,death_point2
         addi $s0,$s0,-320
 	j scroll_down
     go_down:
         addi $a0,$s0,640
         jal ball
         addi $t9,$s5,-320
-        slt $v0,$s0,$t9
-        beq $v0,$zero,scroll_down
+        slt $v0,$a0,$t9
         addi $s0,$s0,320
+        beq $v0,$zero,death_point1
+        j scroll_down
+    death_point1:
+        addi $s0,$s0,320
+    death_point2:
+        jal death
 scroll_down:
 	addi $t0,$zero,960
 	loop_sd1:
@@ -243,4 +252,44 @@ random:
     label_random_1:
 jr $ra
 
-// FIXME: smashing through the bricks
+death:
+    addi $sp,$sp,-4
+    sw $ra,4($sp)
+    move $a0,$s0
+    jal erase
+    beq $a2,$a2,end
+    addi $a2,$a2,-1
+recover:
+    addi $t0,$zero,1600
+    sll $t0,$t0,2
+    add $t0,$t0,$s6
+    addi $t1,$zero,2400
+    sll $t1,$t1,2
+    add $t1,$t1,$s6
+    loop_recover:
+        lw $t2,0($t0)
+        addi $t3,$zero,0x1720
+        bne $t2,$t3,empty_LZ
+            //jal erase
+            addi $s0,$t0,-312
+            sub $s0,$s0,$s6
+            move $a0,$s0
+            move $s1,$s0
+            jal ball
+            j end_recover
+        empty_LZ:
+        addi $t0,$t0,4
+        slt $t2,$t0,$t1
+    bne $t2,$zero,loop_recover
+        addi $s0,$zero,1720
+        sll $s0,$s0,2
+        move $a0,$s0
+        move $s1,$s0
+        jal ball 
+    end_recover:
+    lw $ra,4($sp)
+    addi $sp,$sp,4
+j cursor
+// TODO: store the position of the bricks on some part of the RAM
+
+.data 0x00001000

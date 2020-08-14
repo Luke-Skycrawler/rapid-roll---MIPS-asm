@@ -24,7 +24,7 @@ j end
 up_spike:                    //stack pointer not used, static not stored
     addi $s0,$zero,0
     addi $s1,$zero,320
-    addi $t1,$zero,0x0720
+    addi $t1,$zero,0x0020
     loop_0:
         add $t0,$s0,$s6
         sw $t1,0($t0)
@@ -39,7 +39,7 @@ up_spike:                    //stack pointer not used, static not stored
         addi $s0,$s0,4
     bne $s0,$s1,loop_1
     addi $s0,$zero,640
-    addi $t1,$zero,0x7020
+    addi $t1,$zero,0x3020
     loop_2:
         add $t0,$s0,$s6		
         sw $t1,0($t0)			
@@ -120,7 +120,7 @@ ignore:
     move $s2,$zero
     j loop_10
 erase:
-    addi $t1,$zero,0x7020
+    addi $t1,$zero,0x3020
     add $t0,$s6,$a0
     sw $t1,0($t0)
 jr $ra
@@ -132,11 +132,11 @@ refresh:
     add $t0,$s0,$s6
     lw $t1,320($t0)
 	andi $t1,$t1,0xffff
-    addi $t9,$zero,0x7020
+    addi $t9,$zero,0x3020
     bne $t9,$t1,go_up
     lw $t1,640($t0)
     andi $t1,$t1,0xffff
-    addi $t9,$zero,0x7020
+    addi $t9,$zero,0x3020
     bne $t9,$t1,stady
     j go_down
     stady:
@@ -167,7 +167,7 @@ scroll_down:
 	bne $t0,$s5,loop_sd1
 end_scroll:
 	addi $t0,$t0,-320
-	addi $t1,$zero,0x7020
+	addi $t1,$zero,0x3020
 	loop_sd2:
 		add $t9,$t0,$s6
 		sw $t1,0($t9)
