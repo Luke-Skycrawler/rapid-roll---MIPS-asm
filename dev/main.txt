@@ -6,6 +6,7 @@ addi $s7,$zero,0x2fff
 nor $s7,$s7,$zero           //s7 = 0xffffd000
 addi $s6,$zero,12
 sll $s6, $s6,16             //s6 = 0x000c0000
+addi $s4,$s6,0x3500     //s4= c3500 (800000)
 //addi $$t0,$$t0,0x0741       //background black, text white
 addi $s5,$zero,4800
 sll $s5,$s5,2
@@ -15,7 +16,7 @@ jal broad
 addi $a0,$a0,1560
 jal broad
 addi $a0,$a0,3280
-jal spike
+jal broad
 addi $a0,$a0,-300
 jal heart
 addi $a0,$a0,-20
@@ -97,7 +98,6 @@ cursor:                     //print the cursor, two arguments x and y, and dispo
     addi $t7,$zero,0xf0     // ps2 break code
 	addi $t0,$zero,0xc
 	sll $s3,$t0,28
-    addi $s4,$s6,0x3500     //s4= c3500 (800000)
     move $t8,$zero
     loop_10:
         lw $t0,0($s7)
@@ -141,6 +141,14 @@ jr $ra
 //end of cursor
 
 refresh:
+    addi $a1,$a1,1
+    andi $t0,$a1,0x3f
+    slti $t0,$t0,0x3f
+    bne $t0,$zero,_speed_up
+        addi $t1,$zero,1
+        sll $t1,$t1,16
+        sub $s4,$s4,$t1
+    _speed_up:
     move $a0,$s0
     jal erase
     add $t0,$s0,$s6
@@ -223,7 +231,7 @@ gen:
     addi $t0,$zero,19
     divu $a3,$t0
     mfhi $t0
-    slti $t0,$t0,5
+    slti $t0,$t0,6
     // TODO: decide the frequency of the panel
     beq $zero,$t0,gen_end
         addi $t1,$zero,17
@@ -239,7 +247,7 @@ gen:
         // starting position
         divu $a3,$t2
         mfhi $t2
-        slti $t1,$t1,16
+        slti $t1,$t1,11
         bne $t1,$zero,case_spike
             //jal DRAW_BROAD($t2,LASTLINE)
             jal broad
@@ -328,3 +336,10 @@ print_life:
 jr $ra
 .data 0x00001000
 .word 0x706c,0x7069,0x7066,0x7065
+
+// important registers:
+// s0,s1 : position of the ball
+// s4 : speed of the game
+// a4 : current random seed
+// a3 : life count
+// a2 : score (intended)
