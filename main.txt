@@ -1,9 +1,12 @@
 .text 0x0
+addi $a2,$zero,5
 addi $a3,$zero,1
+addi $sp,$zero,0x1000
 addi $s7,$zero,0x2fff
 nor $s7,$s7,$zero           //s7 = 0xffffd000
 addi $s6,$zero,12
 sll $s6, $s6,16             //s6 = 0x000c0000
+addi $s4,$s6,0x3500     //s4= c3500 (800000)
 //addi $$t0,$$t0,0x0741       //background black, text white
 addi $s5,$zero,4800
 sll $s5,$s5,2
@@ -13,7 +16,7 @@ jal broad
 addi $a0,$a0,1560
 jal broad
 addi $a0,$a0,3280
-jal spike
+jal broad
 addi $a0,$a0,-300
 jal heart
 addi $a0,$a0,-20
@@ -23,13 +26,25 @@ end:
 j end
 up_spike:                    //stack pointer not used, static not stored
     addi $s0,$zero,0
-    addi $s1,$zero,320
+    addi $s1,$zero,272
     addi $t1,$zero,0x0720
     loop_0:
         add $t0,$s0,$s6
         sw $t1,0($t0)
         addi $s0,$s0,4
     bne $s0,$s1,loop_0
+    addi $s1,$s1,16
+    addi $t2,$sp,0
+    loop_n:
+        lw $t1,0($t2)
+        addi $t2,$t2,4
+        add $t0,$s0,$s6
+        sw $t1,0($t0)
+        addi $s0,$s0,4
+    bne $s0,$s1,loop_n
+    move $t9,$ra
+    jal print_life
+    move $ra,$t9
     addi $s0,$zero,320
     addi $s1,$zero,640
     addi $t1,$zero,0x7056
@@ -83,7 +98,6 @@ cursor:                     //print the cursor, two arguments x and y, and dispo
     addi $t7,$zero,0xf0     // ps2 break code
 	addi $t0,$zero,0xc
 	sll $s3,$t0,28
-    addi $s4,$s6,0x3500     //s4= c3500 (800000)
     move $t8,$zero
     loop_10:
         lw $t0,0($s7)
@@ -127,16 +141,26 @@ jr $ra
 //end of cursor
 
 refresh:
+    addi $a1,$a1,1
+    andi $t0,$a1,0x3f
+    slti $t0,$t0,0x3f
+    bne $t0,$zero,_speed_up
+        addi $t1,$zero,1
+        sll $t1,$t1,16
+        sub $s4,$s4,$t1
+    _speed_up:
     move $a0,$s0
     jal erase
     add $t0,$s0,$s6
     lw $t1,320($t0)
 	andi $t1,$t1,0xffff
     addi $t9,$zero,0x7020
+    addi $t3,$zero,0x701E
+    beq $t3,$t1,death_point2
     bne $t9,$t1,go_up
     lw $t1,640($t0)
     andi $t1,$t1,0xffff
-    addi $t9,$zero,0x7020
+    //beq $t8,$t1,death_point2
     bne $t9,$t1,stady
     j go_down
     stady:
@@ -147,16 +171,21 @@ refresh:
         jal ball
         addi $t9,$zero,960
         slt $v0,$s0,$t9
-        bne $v0,$zero,scroll_down
+        bne $v0,$zero,death_point2
         addi $s0,$s0,-320
 	j scroll_down
     go_down:
         addi $a0,$s0,640
         jal ball
         addi $t9,$s5,-320
-        slt $v0,$s0,$t9
-        beq $v0,$zero,scroll_down
+        slt $v0,$a0,$t9
         addi $s0,$s0,320
+        beq $v0,$zero,death_point1
+        j scroll_down
+    death_point1:
+        addi $s0,$s0,320
+    death_point2:
+        jal death
 scroll_down:
 	addi $t0,$zero,960
 	loop_sd1:
@@ -202,13 +231,17 @@ gen:
     addi $t0,$zero,19
     divu $a3,$t0
     mfhi $t0
-    slti $t0,$t0,2
+    slti $t0,$t0,6
     // TODO: decide the frequency of the panel
     beq $zero,$t0,gen_end
         addi $t1,$zero,17
         // decide hostile or friendly
         divu $a3,$t1
         mfhi $t1
+        addi $t0,$zero,5
+        divu $a3,$t0
+        mfhi $t0
+        slti $t0,$t0,1
         addi $t2,$zero,72
         divu $a3,$t2
         mfhi $t2
@@ -220,8 +253,12 @@ gen:
         mfhi $t2
         slti $t1,$t1,11
         bne $t1,$zero,case_spike
+            move $t4,$t0
             //jal DRAW_BROAD($t2,LASTLINE)
             jal broad
+            beq $t4,$zero,gen_end
+                addi $a0,$a0,-304
+                jal heart
             j gen_end
         case_spike:
             jal spike
@@ -243,4 +280,74 @@ random:
     label_random_1:
 jr $ra
 
-// FIXME: smashing through the bricks
+death:
+    addi $sp,$sp,-4
+    sw $ra,4($sp)
+    move $a0,$s0
+    jal erase
+    beq $a2,$zero,end
+    addi $a2,$a2,-1
+    jal print_life
+recover:
+    addi $t0,$zero,1600
+    sll $t0,$t0,2
+    add $t0,$t0,$s6
+    addi $t1,$zero,2400
+    sll $t1,$t1,2
+    add $t1,$t1,$s6
+    loop_recover:
+        lw $t2,0($t0)
+        addi $t3,$zero,0x1720
+        bne $t2,$t3,empty_LZ
+            //jal erase
+            addi $s0,$t0,-312
+            sub $s0,$s0,$s6
+            move $a0,$s0
+            move $s1,$s0
+            jal ball
+            j end_recover
+        empty_LZ:
+        addi $t0,$t0,4
+        slt $t2,$t0,$t1
+    bne $t2,$zero,loop_recover
+        addi $s0,$zero,1720
+        sll $s0,$s0,2
+        move $a0,$s0
+        move $s1,$s0
+        jal ball 
+    end_recover:
+    lw $ra,4($sp)
+    addi $sp,$sp,4
+j cursor
+// TODO: store the position of the bricks on some part of the RAM
+print_life:
+    addi $t0,$zero,288
+    add $t0,$t0,$s6
+    addi $t1,$zero,0x076f
+    move $t2,$zero
+    sll $t4,$a2,2
+    loop_life:
+        add $t3,$t2,$t0
+        sw $t1,0($t3)
+        addi $t2,$t2,4
+        slt $t5,$t2,$t4
+    bne $zero,$t5,loop_life
+    addi $t2,$t2,288
+    addi $t4,$zero,320
+    addi $t1,$zero,0x0720
+    loop_l_2:
+        add $t3,$s6,$t2
+        sw $t1,0($t3)
+        addi $t2,$t2,4
+        slt $t5,$t2,$t4
+    bne $zero,$t5,loop_l_2
+jr $ra
+.data 0x00001000
+.word 0x706c,0x7069,0x7066,0x7065
+
+// important registers:
+// s0,s1 : position of the ball
+// s4 : speed of the game
+// a4 : current random seed
+// a3 : life count
+// a2 : score (intended)

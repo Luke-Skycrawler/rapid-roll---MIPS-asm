@@ -26,7 +26,7 @@ end:
 j end
 up_spike:                    //stack pointer not used, static not stored
     addi $s0,$zero,0
-    addi $s1,$zero,272
+    addi $s1,$zero,268
     addi $t1,$zero,0x0720
     loop_0:
         add $t0,$s0,$s6
@@ -42,6 +42,15 @@ up_spike:                    //stack pointer not used, static not stored
         sw $t1,0($t0)
         addi $s0,$s0,4
     bne $s0,$s1,loop_n
+    addi $s1,$s1,-60
+    addi $s0,$s1,-20
+    loop_score:
+        lw $t1,0($t2)
+        addi $t2,$t2,4
+        add $t0,$s0,$s6
+        sw $t1,0($t0)
+        addi $s0,$s0,4
+    bne $s0,$s1,loop_score
     move $t9,$ra
     jal print_life
     move $ra,$t9
@@ -142,6 +151,8 @@ jr $ra
 
 refresh:
     addi $a1,$a1,1
+    move $a0,$a1
+    jal hex2dec
     andi $t0,$a1,0x3f
     slti $t0,$t0,0x3f
     bne $t0,$zero,_speed_up
@@ -342,8 +353,39 @@ print_life:
         slt $t5,$t2,$t4
     bne $zero,$t5,loop_l_2
 jr $ra
+
+hex2dec:
+//a1 as argument
+	move $t6,$ra
+	move $t1,$zero
+	move $t3,$zero
+	addi $t8,$zero,10
+	loop_8:
+		sll $t1,$t1,4
+		div $a0,$t8
+		mflo $a0
+		mfhi $t0
+		add $t1,$t0,$t1
+		addi $t3,$t3,1
+	bne $a0,$zero,loop_8
+	move $t4,$zero
+	move $a0,$t1
+    addi $t1,$zero,232
+	loop_9:
+		andi $v1,$a0,0xf
+        addi $v0,$v1,0x0730
+        add $t0,$s6,$t1
+        sw $v0,0($t0)
+		srl $a0,$a0,4
+		addi $t4,$t4,1
+        addi $t1,$t1,4
+	bne $t4,$t3,loop_9
+jr $t6
+print_score:
+jr $ra
+
 .data 0x00001000
-.word 0x706c,0x7069,0x7066,0x7065
+.word 0x706c,0x7069,0x7066,0x7065,0x7073,0x7063,0x706f,0x7072,0x7065
 
 // important registers:
 // s0,s1 : position of the ball
