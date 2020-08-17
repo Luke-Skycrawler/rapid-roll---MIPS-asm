@@ -238,6 +238,10 @@ gen:
         // decide hostile or friendly
         divu $a3,$t1
         mfhi $t1
+        addi $t0,$zero,5
+        divu $a3,$t0
+        mfhi $t0
+        slti $t0,$t0,1
         addi $t2,$zero,72
         divu $a3,$t2
         mfhi $t2
@@ -249,8 +253,12 @@ gen:
         mfhi $t2
         slti $t1,$t1,11
         bne $t1,$zero,case_spike
+            move $t4,$t0
             //jal DRAW_BROAD($t2,LASTLINE)
             jal broad
+            beq $t4,$zero,gen_end
+                addi $a0,$a0,-304
+                jal heart
             j gen_end
         case_spike:
             jal spike
