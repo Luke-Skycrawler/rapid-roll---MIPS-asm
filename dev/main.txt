@@ -1,5 +1,5 @@
 .text 0x0
-addi $a2,$zero,5
+addi $a2,$zero,0
 addi $a3,$zero,1
 addi $sp,$zero,0x1000
 addi $s7,$zero,0x2fff
@@ -273,7 +273,7 @@ gen:
         addi $t0,$zero,5
         divu $a3,$t0
         mfhi $t0
-        slti $t0,$t0,15
+        slti $t0,$t0,1
         addi $t2,$zero,72
         divu $a3,$t2
         mfhi $t2
@@ -317,7 +317,7 @@ death:
     sw $ra,4($sp)
     move $a0,$s0
     jal erase
-    beq $a2,$zero,end
+    beq $a2,$zero,endgame
     addi $a2,$a2,-1
     jal print_life
 recover:
@@ -402,11 +402,49 @@ hex2dec:
         addi $t1,$t1,4
 	bne $t4,$t3,loop_9
 jr $t6
-print_score:
-jr $ra
+endgame:
+    addi $s0,$zero,0x7000
+    move $t3,$zero
+    loop_repeat:
+        addi $t0,$zero,320
+        loop_endgame:
+            add $t2,$t0,$s6
+            lw $t9,0($t2)
+            slt $t5,$t9,$s0
+            andi $t9,$t9,0xff
+            bne $t5,$zero,changed_to_light
+                addi $t9,$t9,0x0700
+                j merge
+            changed_to_light:
+                addi $t9,$t9,0x7000
+            merge:
+            sw $t9,0($t2)
+            addi $t0,$t0,4
+        bne $t0,$s5,loop_endgame
+        move $t8,$zero
+        loop_time:
+            addi $t8,$t8,1
+            add $zero,$zero,$zero
+            add $zero,$zero,$zero
+            slt $t9,$t8,$s6
+        bne $t9,$zero,loop_time
+        addi $t3,$t3,1
+        slti $t4,$t3,5
+    bne $t4,$zero,loop_repeat
+    addi $t1,$s6,2228
+    addi $t2,$t1,20
+    sub $t4,$sp,$s6
+    addi $t4,$t4,36
+    loop_retry:
+        add $t5,$t1,$t4
+        lw $t3,($t5)
+        sw $t3,0($t1)
+        addi $t1,$t1,4
+    bne $t1,$t2,loop_retry
+j end
 
 .data 0x00001000
-.word 0x706c,0x7069,0x7066,0x7065,0x7073,0x7063,0x706f,0x7072,0x7065
+.word 0x706c,0x7069,0x7066,0x7065,0x7073,0x7063,0x706f,0x7072,0x7065,0x70211,0x70198,0x70213,0x70211,0x70218
 
 // important registers:
 // s0,s1 : position of the ball

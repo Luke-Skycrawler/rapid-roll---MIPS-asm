@@ -441,10 +441,72 @@ endgame:
         sw $t3,0($t1)
         addi $t1,$t1,4
     bne $t1,$t2,loop_retry
-j end
 
+    addi $a0,$zero,6480
+    addi $v0,$zero,40
+    addi $v1,$zero,10
+    jal window
+    addi $a0,$zero,0x1200
+    //addi $a0,$a0,32
+    jal put_string
+    addi $a0,$a0,8
+    jal put_string
+    addi $a0,$a0,8
+    jal put_string
+    addi $a0,$a0,8
+    jal put_string
+j end
+window:
+    move $s0,$v1
+    move $s1,$v0
+    move $t0,$zero
+    move $s2,$zero
+    addi $s3,$zero,2
+    loop_outter:
+        move $t1,$zero
+        loop_inner:
+            sll $t2,$t1,2
+            add $t2,$t2,$s6
+            add $t2,$t2,$a0
+            add $t2,$t2,$s2
+            beq $t0,$s3,line
+                addi $t3,$zero,0x7020
+                j window_merge
+            line:
+                addi $t3,$zero,0x705f    // _ dash
+            window_merge:
+            sw $t3,($t2)
+            addi $t1,$t1,1
+        bne $t1,$s1,loop_inner
+        addi $t0,$t0,1
+        addi $s2,$s2,320
+    bne $t0,$s0,loop_outter
+jr $ra    
+put_string:
+    lw $t0,($a0)
+    lw $t1,4($a0)
+    add $t0,$t0,$s6
+    loop_string:
+        lw $t2,($t1)
+        beq $t2,$zero,eos
+            sw $t2,($t0)
+        addi $t1,$t1,4
+        addi $t0,$t0,4
+    j loop_string
+    eos:
+jr $ra
 .data 0x00001000
-.word 0x706c,0x7069,0x7066,0x7065,0x7073,0x7063,0x706f,0x7072,0x7065,0x70211,0x70198,0x70213,0x70211,0x70218
+.word 0x706c,0x7069,0x7066,0x7065,0x7073,0x7063,0x706f,0x7072,0x7065,0x7072,0x7065,0x7074,0x7072,0x7079,0x703f,0x0  //option, 0x1024
+.word 0x706f,0x7070,0x7074,0x7069,0x706f,0x706e,0x0 //retry?, 0x1040
+.word 0x7067,0x7061,0x706d,0x7065,0x706f,0x7076,0x7065,0x7072,0x0   //gameover, 0x105c
+.word 0x7073,0x7065,0x7074,0x7074,0x7069,0x706e,0x7067,0x7073,0x0   //settings, 0x1080
+.word 0x7068,0x7069,0x7067,0x7068,0x7073,0x7063,0x706f,0x7072,0x7065,0x0    //high score, 0x10a4
+.word 0x7073,0x7070,0x7065,0x7065,0x7064,0x0    //speed, 0x10cc
+.word 0x7070,0x7061,0x706e,0x7065,0x706c,0x7064,0x7065,0x706e,0x7073,0x7069,0x7074,0x7079,0x0    //panel density, 0x10e4
+.word 0x7068,0x706f,0x7073,0x7070,0x7069,0x7074,0x7061,0x706c,0x7069,0x7074,0x7079,0x0 //hospitality, 0x1118
+
+.data 0x1200
+.word 6804,0x105c,7764,0x10a4,8404,0x1040,9044,0x1080,6804,0x1080,7764,0x10cc,8404,0x10e4,9044,0x1118
 
 // important registers:
 // s0,s1 : position of the ball
@@ -452,3 +514,16 @@ j end
 // a4 : current random seed
 // a3 : life count
 // a2 : score (intended)
+
+// syntax:
+// a0: struct_string pos
+// each string ends with 0x0
+
+// struct_string syntax:
+// offset (position)
+// str_addr (relative to str)
+
+// window syntax:
+// a0: start_addr
+// v0: width
+// v1: height

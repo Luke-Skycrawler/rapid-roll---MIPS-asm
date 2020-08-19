@@ -1,0 +1,33 @@
+window:
+    move $s0,$v1
+    move $s1,$v0
+    move $t0,$zero
+    move $s2,$zero
+    addi $s3,$zero,1
+    loop_outter:
+            sll $t2,$t1,2
+            add $t2,$t2,$s6
+            add $t2,$t2,$a0
+            add $t2,$t2,$s2
+            beq $t0,$s3,line
+                addi $t3,$zero,0x7020
+                j window_merge
+            line:
+                addi $t3,$zero,0x705f    // _ dash
+            window_merge:
+            sw $t3,($t2)
+        bne $t1,$s1,loop_outter
+        addi $t0,$t0,1
+        addi $s2,$s2,320
+    bne $t0,$s0,loop_outter
+jr $ra    
+
+
+// syntax:
+// offset (position)
+// str_addr (relative to str)
+
+// window syntax:
+// a0: start_addr
+// v0: width
+// v1: height
