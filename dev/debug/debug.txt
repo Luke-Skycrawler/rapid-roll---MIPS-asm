@@ -21,7 +21,8 @@ addi $a0,$a0,-300
 jal heart
 addi $a0,$a0,-20
 jal ball
-j cursor
+//j cursor
+j afterlife
 end:
 j end
 up_spike:                    //stack pointer not used, static not stored
@@ -106,54 +107,8 @@ cursor:                     //print the cursor, two arguments x and y, and dispo
     addi $t6,$zero,0xe0		// pressed code
     addi $t7,$zero,0xf0     // ps2 break code
 	addi $t0,$zero,0xc
+	sll $s3,$t0,28
     move $t8,$zero
-    loop_10:
-        lw $t0,0($s7)
-        srl $t1,$t0,31
-        addi $t8,$t8,1
-    beq $t8,$s4,refresh
-    beq $t1,$zero,loop_10
-    fetched:
-        andi $t0,$t0,0xff
-        beq $t0,$t6,another_key
-        beq $t0,$t7,break_code
-        j process_key
-        break_code:
-            addi $s2,$zero,1
-        another_key:
-            lw $t0,0($s7)
-            srl $t1,$t0,31
-            beq $t1,$zero,another_key
-            j fetched
-    process_key:
-        //TODO: boundary 
-        move $s1,$s0
-        bne $s2,$zero,ignore
-            move $a0,$t0
-            jal translate_switch
-            act:
-            bne $s2,$zero,ignore
-                add $t0,$s1,$s6
-                lw $t1,0($t0)
-                addi $t2,$zero,0x7503
-                bne $t2,$t1,_add_life_2
-                    slti $t2,$a2,7
-                    beq $t2,$zero,lr_move
-                    addi $a2,$a2,1
-                    jal print_life
-                    j lr_move
-                _add_life_2:
-                addi $t2,$zero,0x7020
-                bne $t2,$t1,ignore
-                lr_move:
-                    move $a0,$s0
-                    jal erase
-                    move $a0,$s1
-                    jal ball
-                    move $s0,$s1
-ignore:
-    move $s2,$zero
-    j loop_10
 erase:
     addi $t1,$zero,0x7020
     add $t0,$s6,$a0
@@ -235,26 +190,7 @@ end_scroll:
 	bne $t0,$s5,loop_sd2
 	move $t8,$zero
 	jal gen
-	j ignore
 
-translate_switch:
-    addi $t1,$zero,107 //left
-    beq $t1,$a0,left
-    addi $t1,$zero,116 //right
-    beq $t1,$a0,right
-    j end_switch
-    left:
-        addi $s1,$s0,-4
-        slt $t1,$s1,$zero
-        bne $t1,$zero,ignore
-        j act
-    right:
-        addi $s1,$s0,4
-        slt $t1,$s1,$zero
-        bne $t1,$zero,ignore
-        j act
-    end_switch:
-jr $ra
 
 gen:
     sw $ra,0($sp)
@@ -376,7 +312,7 @@ jr $ra
 
 hex2dec:
 //a1 as argument
-	move $t6,$ra
+	move $t5,$ra
 	move $t1,$zero
 	move $t3,$zero
 	addi $t8,$zero,10
@@ -400,7 +336,7 @@ hex2dec:
 		addi $t4,$t4,1
         addi $t1,$t1,4
 	bne $t4,$t3,loop_9
-jr $t6
+jr $t5
 endgame:
     addi $s0,$zero,0x7000
     move $t3,$zero
@@ -619,7 +555,7 @@ translate_switch_menu:
 
 .data 0x1200
 .word 6804,0x105c,7764,0x10a4,8404,0x1040,9044,0x1080,6804,0x1080,7764,0x10cc,8404,0x10e4,9044,0x1118
-
+.data 0x1300
 // important registers:
 // s0,s1 : position of the ball
 // s4 : speed of the game

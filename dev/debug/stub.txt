@@ -1,0 +1,91 @@
+shade:
+    move $s1,$v0
+    addi r1,$zero,640
+    mult a0,r1
+    mflo r1
+    addi r1,r1,6800
+    addi a0,$zero,6800
+    loop_shade:
+        sll $t2,$t1,2
+        add $t2,$t2,$s6
+        add $t2,$t2,$a0
+        add $t2,$t2,r1
+        lw $t3,($t2)
+            andi r2,$t3,0x100
+            bne r2,zero,un_shade
+                addi $t3,$t3,-0x100
+                j merge_shade
+            un_shade:
+                addi $t3,$t3,0x100
+        merge_shade:    
+        sw $t3,($t2)
+        addi $t1,$t1,1
+    bne $t1,$s1,loop_shade
+jr $ra
+// a0: row 
+loop_menu:
+        lw $t0,0($s7)
+        srl $t1,$t0,31
+    beq $t1,$zero,loop_menu
+    fetched_menu:
+        andi $t0,$t0,0xff
+        beq $t0,$t6,another_key_menu
+        beq $t0,$t7,break_code_menu
+        j process_key_menu
+        break_code_menu:
+            addi $s2,$zero,1
+        another_key_menu:
+            lw $t0,0($s7)
+            srl $t1,$t0,31
+            beq $t1,$zero,another_key_menu
+            j fetched
+    process_key_menu:
+        //TODO: boundary 
+        move $s1,$s0
+        bne $s2,$zero,ignore
+            move $a0,$t0
+            jal translate_switch_menu
+            act_menu:
+            bne $s2,$zero,ignore_menu
+
+ignore_menu:
+    move $s2,$zero
+    j loop_menu
+translate_switch_menu:
+    addi $t1,$zero,107 //left
+    beq $t1,$a0,left_menu
+    addi $t1,$zero,116 //right
+    beq $t1,$a0,right_menu
+	addi $t1,$zero,90
+	beq $t0,$t1,case_enter // { enter }
+	addi $t1,$zero,114
+	beq $t0,$t1,case_down // { down }
+	addi $t1,$zero,117
+	beq $t0,$t1,case_up // { up }
+    j end_switch_menu
+    left_menu:
+        beq flag,$zero,end_switch_menu
+        sll r1,row,4
+        addi r1,r1,heap
+        lw r3,(r1)
+        slti r2,r1,1
+        bne $zero,r2,end_switch_menu
+        addi r3,r1,-1
+        sw r3,(r1)
+        j end_switch_menu
+    right_menu:
+        beq flag,$zero,end_switch_menu
+        j act_menu
+    case_enter:
+        j end_switch_menu
+    case_down:
+        slti r1,row,3
+        beq r1,$zero,end_switch_menu
+            addi r1,r1,1
+        j end_switch_menu
+    case_up:
+        slti r1,row,2
+        bne r1,$zero,end_switch_menu
+            addi r1,r1,-1
+    end_switch_menu:
+jr $ra
