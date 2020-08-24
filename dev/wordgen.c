@@ -3,7 +3,8 @@ int main(void){
     // FILE *f;
     char str[25];
     do{
-        scanf("%s",str);
+        // scanf("%s",str);
+        gets(str);
         // fopen("a.txt","w");
         for(int i=0;str[i];i++){
             //fprintf(f,",0x70%d",'a'+(int)str[i]);
