@@ -1,4 +1,5 @@
 .text 0x0
+start:
 addi $a2,$zero,0
 addi $a3,$zero,1
 addi $sp,$zero,0x1000
@@ -442,21 +443,10 @@ endgame:
     bne $t1,$t2,loop_retry
 
 afterlife:
-    addi $gp,$zero,1
     addi $a0,$zero,6480
     addi $v0,$zero,40
     addi $v1,$zero,10
     jal window
-    addi $a0,$zero,0x1200
-    //addi $a0,$a0,32
-    jal put_string
-    addi $a0,$a0,8
-    jal put_string
-    addi $a0,$a0,8
-    jal put_string
-    addi $a0,$a0,8
-    jal put_string
-    jal shade
     j cursor_menu
 j end
 window:
@@ -484,7 +474,21 @@ window:
         addi $t0,$t0,1
         addi $s2,$s2,320
     bne $t0,$s0,loop_outter
-jr $ra    
+    addi $a0,$zero,0x1200
+put_strings:
+    move $fp,$ra
+    //addi $a0,$zero,0x1200
+    //addi $a0,$a0,32
+    jal put_string
+    addi $a0,$a0,8
+    jal put_string
+    addi $a0,$a0,8
+    jal put_string
+    addi $a0,$a0,8
+    jal put_string
+    addi $gp,$zero,1
+    jal shade
+jr $fp
 put_string:
     lw $t0,($a0)
     lw $t1,4($a0)
@@ -576,19 +580,62 @@ translate_switch_menu:
     j end_switch_menu
     left_menu:
         beq $at,$zero,end_switch_menu
-        sll $t2,$gp,4
+        sll $t2,$gp,3
         addi $t2,$t2,0x1300
         lw $t4,($t2)
-        slti $t3,$t2,1
-        bne $zero,$t3,end_switch_menu
-        addi $t4,$t2,-1
+        beq $t4,$zero,ignore_menu
+        addi $t4,$t4,-1
         sw $t4,($t2)
-        j end_switch_menu
+        move $a0,$t4
+        addi $t8,$zero,8548
+        addi $t0,$gp,-2
+        beq $t0,$zero,under
+            addi $t8,$t8,640
+        under:
+        jal hex2dec_2
+        j ignore_menu
     right_menu:
         beq $at,$zero,end_switch_menu
-        j act_menu
+        sll $t2,$gp,3
+        addi $t2,$t2,0x1300
+        lw $t4,($t2)
+        lw $t0,4($t2)
+        beq $t4,$t0,ignore_menu
+        addi $t4,$t4,1
+        sw $t4,($t2)
+        move $a0,$t4
+        addi $t8,$zero,8548
+        addi $t0,$gp,-2
+        beq $t0,$zero,under_2
+            addi $t8,$t8,640
+        under_2:
+        jal hex2dec_2
+        j ignore_menu
     case_enter:
-        j end_switch_menu
+        addi $t0,$zero,3
+        addi $t1,$zero,2
+        bne $at,$zero,skip
+            beq $gp,$t1,start
+            bne $gp,$t0,end_switch_menu
+        skip:
+        addi $a0,$zero,0x1200
+        beq $at,$zero,settings_menu
+            move $at,$zero
+            j afterlife 
+        settings_menu:
+            addi $at,$at,1
+            addi $a0,$a0,32
+            jal shade
+            jal put_strings
+            addi $t8,$zero,8548
+            addi $t0,$zero,0x1310
+            lw $a0,($t0)
+            jal hex2dec_2
+            addi $t0,$zero,0x1310
+            lw $a0,8($t0)
+            addi $t8,$zero,9188
+            jal hex2dec_2
+        j ignore_menu
     case_down:
         slti $t2,$gp,3
         beq $t2,$zero,end_switch_menu
@@ -607,18 +654,54 @@ translate_switch_menu:
         j act_menu
     end_switch_menu:
     jr $ra
+hex2dec_2:
+//a1 as argument
+	move $t5,$ra
+	move $t1,$zero
+	move $t3,$zero
+	addi $t2,$zero,10
+	loop_82:
+		sll $t1,$t1,4
+		div $a0,$t2
+		mflo $a0
+		mfhi $t0
+		add $t1,$t0,$t1
+		addi $t3,$t3,1
+	bne $a0,$zero,loop_82
+	move $t4,$zero
+	move $a0,$t1
+    move $t1,$t8
+	loop_92:
+		andi $t9,$a0,0xf
+        add $t0,$s6,$t1
+        lw $t2,($t0)
+        andi $t2,$t2,0x7700
+        add $t2,$t9,$t2
+        addi $t2,$t2,0x30
+        sw $t2,0($t0)
+		srl $a0,$a0,4
+		addi $t4,$t4,1
+        addi $t1,$t1,4
+	bne $t4,$t3,loop_92
+    addi $t0,$t0,4
+    andi $t2,$t2,0x7700
+    addi $t2,$t2,0x20
+    sw $t2,($t0)
+jr $t5
 .data 0x00001000
-.word 0x706c,0x7069,0x7066,0x7065,0x7073,0x7063,0x706f,0x7072,0x7065,0x7072,0x7065,0x7074,0x7072,0x7079,0x703f,0x0  //option, 0x1024
-.word 0x706f,0x7070,0x7074,0x7069,0x706f,0x706e,0x0 //retry?, 0x1040
+.word 0x706c,0x7069,0x7066,0x7065,0x7073,0x7063,0x706f,0x7072,0x7065,0x7072,0x7065,0x7074,0x7072,0x7079,0x0,0x0  //retry?, 0x1024   703f
+.word 0x706f,0x7070,0x7074,0x7069,0x706f,0x706e,0x0 //option, 0x1040
 .word 0x7067,0x7061,0x706d,0x7065,0x706f,0x7076,0x7065,0x7072,0x0   //gameover, 0x105c
 .word 0x7073,0x7065,0x7074,0x7074,0x7069,0x706e,0x7067,0x7073,0x0   //settings, 0x1080
 .word 0x7068,0x7069,0x7067,0x7068,0x7073,0x7063,0x706f,0x7072,0x7065,0x0    //high score, 0x10a4
-.word 0x7073,0x7070,0x7065,0x7065,0x7064,0x0    //speed, 0x10cc
-.word 0x7070,0x7061,0x706e,0x7065,0x706c,0x7064,0x7065,0x706e,0x7073,0x7069,0x7074,0x7079,0x0    //panel density, 0x10e4
-.word 0x7068,0x706f,0x7073,0x7070,0x7069,0x7074,0x7061,0x706c,0x7069,0x7074,0x7079,0x0 //hospitality, 0x1118
+.word 0x7073,0x7070,0x7065,0x7065,0x7064,0x7020,0x7020,0x7020,0x7020,0x0    //speed, 0x10cc
+.word 0x7070,0x7061,0x706e,0x7065,0x706c,0x7064,0x7065,0x706e,0x7073,0x7069,0x7074,0x7079,0x0    //panel density, 0x10f4
+.word 0x7068,0x706f,0x7073,0x7070,0x7069,0x7074,0x7061,0x706c,0x7069,0x7074,0x7079,0x0 //hospitality, 0x1128
 
 .data 0x1200
-.word 6804,0x105c,7764,0x10a4,8404,0x1040,9044,0x1080,6804,0x1080,7764,0x10cc,8404,0x10e4,9044,0x1118
+.word 6804,0x105c,7764,0x10a4,8404,0x1024,9044,0x1080,6804,0x1080,7764,0x10cc,8404,0x10f4,9044,0x1128
+.data 0x1300
+.word 0,0,0,0,6,19,11,17,
 
 // important registers:
 // s0,s1 : position of the ball
