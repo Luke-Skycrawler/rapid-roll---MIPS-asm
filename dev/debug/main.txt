@@ -263,7 +263,9 @@ gen:
     addi $t0,$zero,19
     divu $a3,$t0
     mfhi $t0
-    slti $t0,$t0,6
+    addi $t1,$zero,0x1310
+    lw $t2,($t1)
+    slt $t0,$t0,$t2
     // TODO: decide the frequency of the panel
     beq $zero,$t0,gen_end
         addi $t1,$zero,17
@@ -283,7 +285,9 @@ gen:
         // starting position
         divu $a3,$t2
         mfhi $t2
-        slti $t1,$t1,11
+        addi $t3,$zero,0x1310
+        lw $t4,8($t3)
+        slt $t1,$t1,$t4
         bne $t1,$zero,case_spike
             move $t4,$t0
             //jal DRAW_BROAD($t2,LASTLINE)
